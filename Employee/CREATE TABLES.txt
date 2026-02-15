@@ -1,0 +1,34 @@
+/*   https://www.youtube.com/watch?v=TtXbPlzrSSY&t=225s    */
+/*CREATE TABLES */
+CREATE TABLE [dbo].[DepartmentTbl] (
+    [departmentId]   INT           NOT NULL,
+    [departmentName] NVARCHAR (50) NOT NULL,
+    [isActive]       BIT           NULL,
+    PRIMARY KEY CLUSTERED ([departmentId] ASC)
+);
+
+CREATE TABLE [dbo].[DesignationTbl] (
+    [designationId]   INT          NOT NULL,
+    [departmentId]    INT          NOT NULL,
+    [designationName] VARCHAR (50) NOT NULL,
+    PRIMARY KEY CLUSTERED ([designationId] ASC),
+    FOREIGN KEY ([departmentId]) REFERENCES [dbo].[DepartmentTbl] ([departmentId])
+);
+
+CREATE TABLE [dbo].[EmployeeTbl] (
+    [employeeId]    INT            NOT NULL,
+    [name]          VARCHAR (50)   NOT NULL,
+    [contactNo]     VARBINARY (10) NOT NULL,
+    [email]         VARCHAR (50)   NOT NULL,
+    [city]          VARCHAR (50)   NOT NULL,
+    [state]         VARCHAR (50)   NOT NULL,
+    [pincode]       VARCHAR (6)    NOT NULL,
+    [altContactNo]  VARCHAR (50)   NULL,
+    [address]       VARCHAR (2000) NOT NULL,
+    [designationId] INT            NOT NULL,
+    [createdDate]   DATETIME       NULL,
+    [modifiedDate]  DATETIME       NULL,
+    PRIMARY KEY CLUSTERED ([employeeId] ASC),
+    FOREIGN KEY ([designationId]) REFERENCES [dbo].[DesignationTbl] ([designationId])
+);
+
