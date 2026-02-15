@@ -10,7 +10,7 @@ namespace Employee.Api.Model
 
 		}
 
-		public DbSet<Employee> Employees { get; set; }
+		public DbSet<EmployeeModel> Employees { get; set; }
 		public DbSet<Department> Departments { get; set; }
 		public DbSet<Designation> Designations { get; set; }
 	}

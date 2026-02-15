@@ -1,6 +1,8 @@
-﻿using Employee.Api.Model;
+﻿using Employee.Api.DTO;
+using Employee.Api.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Dynamic.Core;
 
 namespace Employee.Api.Controllers
 {
@@ -15,17 +17,49 @@ namespace Employee.Api.Controllers
 			_context = context;
 		}
 
-		// GET: api/employee
+
+		// GET: api/employee => CRUD + FILTRE + TRI + PAGINATION
 		[HttpGet]
-		public async Task<IActionResult> GetAll()
+		public async Task<IActionResult> GetAll([FromQuery] EmployeeQueryParameters query)
 		{
 			try
 			{
-				var employees = await _context.Employees
+				var employees = _context.Employees.AsQueryable();
+
+				// --- FILTRE ---
+				if (!string.IsNullOrWhiteSpace(query.Name))
+					employees = employees.Where(e => e.name.Contains(query.Name));
+
+				if (!string.IsNullOrWhiteSpace(query.Email))
+					employees = employees.Where(e => e.email.Contains(query.Email));
+
+				if (!string.IsNullOrWhiteSpace(query.City))
+					employees = employees.Where(e => e.city.Contains(query.City));
+
+				if (query.DesignationId.HasValue)
+					employees = employees.Where(e => e.designationId == query.DesignationId.Value);
+
+				// --- TRI ---
+				var sortDirection = query.SortDesc ? "descending" : "ascending";
+				employees = employees.OrderBy($"{query.SortBy} {sortDirection}");
+
+				// --- PAGINATION ---
+				var totalRecords = await employees.CountAsync();
+				var pagedData = await employees
+					.Skip((query.PageNumber - 1) * query.PageSize)
+					.Take(query.PageSize)
 					.Include(e => e.Designation)
 					.ToListAsync();
 
-				return Ok(employees);
+				var response = new
+				{
+					TotalRecords = totalRecords,
+					PageNumber = query.PageNumber,
+					PageSize = query.PageSize,
+					Data = pagedData
+				};
+
+				return Ok(response);
 			}
 			catch
 			{
@@ -54,25 +88,24 @@ namespace Employee.Api.Controllers
 			}
 		}
 
+		// POST: api/employee
 		[HttpPost]
-		public async Task<IActionResult> Create([FromBody] Model.Employee employee)
+		public async Task<IActionResult> Create([FromBody] EmployeeModel employee)
 		{
 			try
 			{
 				if (!ModelState.IsValid)
 					return BadRequest(ModelState);
 
-				// Vérifier le DesignationId
-				var designationExists = await _context.Designations
-					.AnyAsync(d => d.designationId == employee.designationId);
-				if (!designationExists)
+				// FK check
+				if (!await _context.Designations.AnyAsync(d => d.designationId == employee.designationId))
 					return BadRequest("Invalid designationId.");
 
-				// Vérifier contactNo unique
+				// Unicité contactNo
 				if (await _context.Employees.AnyAsync(e => e.contactNo == employee.contactNo))
 					return Conflict("contactNo already exists.");
 
-				// Vérifier email unique
+				// Unicité email
 				if (await _context.Employees.AnyAsync(e => e.email.ToLower() == employee.email.ToLower()))
 					return Conflict("Email already exists.");
 
@@ -98,7 +131,7 @@ namespace Employee.Api.Controllers
 
 		// PUT: api/employee/5
 		[HttpPut("{id}")]
-		public async Task<IActionResult> Update(int id, [FromBody] Model.Employee employee)
+		public async Task<IActionResult> Update(int id, [FromBody] EmployeeModel employee)
 		{
 			try
 			{
@@ -108,18 +141,23 @@ namespace Employee.Api.Controllers
 				if (!ModelState.IsValid)
 					return BadRequest(ModelState);
 
-				var existing = await _context.Employees
-					.FirstOrDefaultAsync(e => e.employeeId == id);
-
+				var existing = await _context.Employees.FirstOrDefaultAsync(e => e.employeeId == id);
 				if (existing == null)
 					return NotFound("Employee not found.");
 
-				var designationExists = await _context.Designations
-					.AnyAsync(d => d.designationId == employee.designationId);
-
-				if (!designationExists)
+				// FK check
+				if (!await _context.Designations.AnyAsync(d => d.designationId == employee.designationId))
 					return BadRequest("Invalid designationId.");
 
+				// contactNo unique pour les autres
+				if (await _context.Employees.AnyAsync(e => e.contactNo == employee.contactNo && e.employeeId != id))
+					return Conflict("contactNo already exists.");
+
+				// email unique pour les autres
+				if (await _context.Employees.AnyAsync(e => e.email.ToLower() == employee.email.ToLower() && e.employeeId != id))
+					return Conflict("Email already exists.");
+
+				// Update
 				existing.name = employee.name;
 				existing.contactNo = employee.contactNo;
 				existing.email = employee.email;
@@ -136,6 +174,10 @@ namespace Employee.Api.Controllers
 
 				return Ok("Employee updated successfully.");
 			}
+			catch (DbUpdateException)
+			{
+				return Conflict("Employee contactNo and email must be unique.");
+			}
 			catch
 			{
 				return StatusCode(500, "Internal server error.");
@@ -149,7 +191,6 @@ namespace Employee.Api.Controllers
 			try
 			{
 				var employee = await _context.Employees.FindAsync(id);
-
 				if (employee == null)
 					return NotFound("Employee not found.");
 
@@ -163,6 +204,5 @@ namespace Employee.Api.Controllers
 				return StatusCode(500, "Internal server error.");
 			}
 		}
-
 	}
 }

@@ -7,7 +7,7 @@ namespace Employee.Api.Model
 	[Table("EmployeeTbl")]
 	[Index(nameof(contactNo), IsUnique = true)]
 	[Index(nameof(email), IsUnique = true)]
-	public class Employee
+	public class EmployeeModel
 	{
 		[Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public int employeeId { get; set; }
