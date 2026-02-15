@@ -1,8 +1,8 @@
-﻿using Employee.Model;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Employee.Api.Model;
 
-namespace Employee.Controllers
+namespace Employee.Api.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
@@ -21,11 +21,33 @@ namespace Employee.Controllers
 		}
 
 		[HttpPost("AddDepartment")]
-		public IActionResult AddDepartment(Department department)
+		public async Task<IActionResult> AddDepartmentAsync(Department department)
 		{
-			_context.Departments.Add(department);
-			_context.SaveChanges();
-			return Ok("Deptartement Addes Sucessfully");
+			try
+			{
+				if (!ModelState.IsValid)
+					return BadRequest(ModelState);
+
+				// Vérifier si le nom existe déjà
+				bool exists = await _context.Departments
+					.AnyAsync(d => d.departmentName.ToLower() == department.departmentName.ToLower());
+
+				if (exists)
+					return Conflict("Department name already exists.");
+
+				await _context.Departments.AddAsync(department);
+				await _context.SaveChangesAsync();
+
+				return Ok("Department added successfully.");
+			}
+			catch (DbUpdateException)
+			{
+				return Conflict("Department name must be unique.");
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
 		}
 
 		[HttpPut("UpdateDepartment")]

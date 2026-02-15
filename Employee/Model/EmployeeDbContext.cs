@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Employee.Api.Model;
+using Microsoft.EntityFrameworkCore;
 
-namespace Employee.Model
+namespace Employee.Api.Model
 {
 	public class EmployeeDbContext : DbContext
 	{

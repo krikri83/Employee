@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Employee.Model
+namespace Employee.Api.Model
 {
 	[Table("departmentTbl")]
 	public class Department

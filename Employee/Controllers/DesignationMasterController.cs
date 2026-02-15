@@ -1,15 +1,14 @@
-﻿using Employee.Model;
+﻿using Employee.Api.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 [Route("api/[controller]")]
 [ApiController]
-public class DesignationController : ControllerBase
+public class DesignationMasterController : ControllerBase
 {
 	private readonly EmployeeDbContext _context;
 
-	public DesignationController(EmployeeDbContext context)
+	public DesignationMasterController(EmployeeDbContext context)
 	{
 		_context = context;
 	}
