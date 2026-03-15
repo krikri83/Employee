@@ -17,10 +17,9 @@ namespace Employee.Api.Controllers
 			_context = context;
 		}
 
-
 		// GET: api/employee => CRUD + FILTRE + TRI + PAGINATION
-		[HttpGet]
-		public async Task<IActionResult> GetAll([FromQuery] EmployeeQueryParameters query)
+		[HttpGet("FiltreAllEmployee")]
+		public async Task<IActionResult> Filtre([FromQuery] EmployeeQueryParameters query)
 		{
 			try
 			{
@@ -60,6 +59,22 @@ namespace Employee.Api.Controllers
 				};
 
 				return Ok(response);
+			}
+			catch
+			{
+				return StatusCode(500, "Internal server error.");
+			}
+		}
+
+		// GET: api/employee => CRUD + FILTRE + TRI + PAGINATION
+		[HttpGet("GetAllEmployees")]
+		public IActionResult GetAll([FromQuery] EmployeeQueryParameters query)
+		{
+			try
+			{
+				var employees = _context.Employees.AsQueryable();
+
+				return Ok(employees);
 			}
 			catch
 			{
@@ -204,5 +219,46 @@ namespace Employee.Api.Controllers
 				return StatusCode(500, "Internal server error.");
 			}
 		}
+
+		[HttpPost("login")]
+		public async Task<IActionResult> Login(LoginRequest request)
+		{
+			try
+			{
+				if (string.IsNullOrEmpty(request.Email) && string.IsNullOrEmpty(request.ContactNo))
+				return BadRequest("Email or ContactNo is required.");
+
+				var employee = await _context.Employees
+					.FirstOrDefaultAsync(e =>
+						(request.Email != null && e.email == request.Email) ||
+						(request.ContactNo != null && e.contactNo == request.ContactNo));
+
+				if (employee == null)
+					return Unauthorized("Invalid credentials.");
+
+
+				return Ok(new
+			{
+				message= "Login Successful",
+				data = new
+				{
+					employee.employeeId,
+					employee.name,
+					employee.email,
+					employee.contactNo,
+					employee.designationId,
+					employee.designationName,
+					employee.role
+				}
+			});
+			}
+			catch (Exception ex)
+			{
+
+				return StatusCode(500, ex.Message);
+			}
+			
+		}
+
 	}
 }

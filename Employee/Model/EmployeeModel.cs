@@ -37,6 +37,13 @@ namespace Employee.Api.Model
 
 		public DateTime createdDate { get; set; }
 		public DateTime modifiedDate { get; set; }
+		public string role { get; set; } = string.Empty;
 	}
-
+	public class LoginRequest
+	{
+		[Required, EmailAddress]
+		public string? Email { get; set; }
+		[Required]
+		public string? ContactNo { get; set; }
+	}
 }

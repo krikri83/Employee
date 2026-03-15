@@ -1,4 +1,10 @@
-/*   https://www.youtube.com/watch?v=TtXbPlzrSSY&t=225s    */
+/*   https://www.youtube.com/watch?v=TtXbPlzrSSY&t=225s    
+npm i bootstrap
+npm i font-awesome
+
+"./node_modules/bootstrap/dist/css/boostrap.min.css",
+"./node_modules/fonts-awesome/css/fotn-awesome.min.css",,
+*/
 /*CREATE TABLES */
 CREATE TABLE [dbo].[DepartmentTbl] (
     [departmentId]   INT           NOT NULL,
