@@ -2,7 +2,11 @@
 using Employee.Api.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq.Dynamic.Core;
+using System.Security.Claims;
+using System.Text;
 
 namespace Employee.Api.Controllers
 {
@@ -11,10 +15,12 @@ namespace Employee.Api.Controllers
 	public class EmployeeMasterController : ControllerBase
 	{
 		private readonly EmployeeDbContext _context;
+		private readonly IConfiguration _configuration;
 
-		public EmployeeMasterController(EmployeeDbContext context)
+		public EmployeeMasterController(EmployeeDbContext context, IConfiguration configuration)
 		{
 			_context = context;
+			_configuration = configuration;
 		}
 
 		// GET: api/employee => CRUD + FILTRE + TRI + PAGINATION
@@ -66,9 +72,9 @@ namespace Employee.Api.Controllers
 			}
 		}
 
-		// GET: api/employee => CRUD + FILTRE + TRI + PAGINATION
+		// GET: api/employee 
 		[HttpGet("GetAllEmployees")]
-		public IActionResult GetAll([FromQuery] EmployeeQueryParameters query)
+		public IActionResult GetAll()
 		{
 			try
 			{
@@ -105,15 +111,32 @@ namespace Employee.Api.Controllers
 
 		// POST: api/employee
 		[HttpPost]
-		public async Task<IActionResult> Create([FromBody] EmployeeModel employee)
+		public async Task<IActionResult> Create([FromBody] EmployeeDTO employee)
 		{
 			try
 			{
 				if (!ModelState.IsValid)
 					return BadRequest(ModelState);
+				//Mapping
+				EmployeeModel newModel = new EmployeeModel();
+				newModel.employeeId = employee.employeeId;
+				newModel.name = employee.name;
+				newModel.email = employee.email;
+				newModel.address = employee.address;
+				newModel.pincode = employee.pincode;
+				newModel.role = employee.role;
+				newModel.contactNo = employee.contactNo;
+				newModel.altContactNo = employee.altContactNo;
+				newModel.city = employee.city;
+				newModel.createdDate = employee.createdDate;
+				newModel.Designation = null;
+				newModel.designationId = employee.Designation != null ? employee.Designation.designationId : 0;
+				newModel.designationName = employee.Designation != null ? employee.Designation.designationName : "" ;
+				newModel.modifiedDate = employee.modifiedDate;
+
 
 				// FK check
-				if (!await _context.Designations.AnyAsync(d => d.designationId == employee.designationId))
+				if (!await _context.Designations.AnyAsync(d => d.designationId == newModel.designationId))
 					return BadRequest("Invalid designationId.");
 
 				// Unicité contactNo
@@ -127,7 +150,7 @@ namespace Employee.Api.Controllers
 				employee.createdDate = DateTime.UtcNow;
 				employee.modifiedDate = DateTime.UtcNow;
 
-				await _context.Employees.AddAsync(employee);
+				await _context.Employees.AddAsync(newModel);
 				await _context.SaveChangesAsync();
 
 				return CreatedAtAction(nameof(GetById),
@@ -236,19 +259,28 @@ namespace Employee.Api.Controllers
 				if (employee == null)
 					return Unauthorized("Invalid credentials.");
 
+				var token = GenerateToken(employee.email, employee.name);
+
+				EmployeeDTO employeeDTO = new EmployeeDTO();
+				employeeDTO.employeeId = employee.employeeId;
+				employeeDTO.name = employee.name;
+				employeeDTO.email = employee.email;
+				employeeDTO.contactNo = employee.contactNo;
+				employeeDTO.Designation = new Designation();
+				employeeDTO.Designation.departmentId = employee.designationId;
+				employeeDTO.Designation.designationName = employee.designationName;
+				employeeDTO.role = employee.role; 
+
+				LoginInfo loginInfo = new LoginInfo(token, employeeDTO);
 
 				return Ok(new
 			{
 				message= "Login Successful",
+				
 				data = new
 				{
-					employee.employeeId,
-					employee.name,
-					employee.email,
-					employee.contactNo,
-					employee.designationId,
-					employee.designationName,
-					employee.role
+					loginInfo.Token,
+					loginInfo.employeeDTO
 				}
 			});
 			}
@@ -259,6 +291,29 @@ namespace Employee.Api.Controllers
 			}
 			
 		}
+		private string GenerateToken(string email, string name)
+		{
+			var claims = new[]
+			{
+		new Claim(ClaimTypes.Name, name),
+		new Claim(ClaimTypes.Email, email)
+	};
 
+			var key = new SymmetricSecurityKey(
+				Encoding.UTF8.GetBytes(_configuration["Jwt:Key"])
+			);
+
+			var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+			var token = new JwtSecurityToken(
+				issuer: _configuration["Jwt:Issuer"],
+				audience: _configuration["Jwt:Audience"],
+				claims: claims,
+				expires: DateTime.UtcNow.AddHours(2),
+				signingCredentials: creds
+			);
+
+			return new JwtSecurityTokenHandler().WriteToken(token);
+		}
 	}
 }

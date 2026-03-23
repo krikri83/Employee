@@ -1,0 +1,43 @@
+{
+  "employeeId": 1,
+  "name": "Stig Nilsson",
+  "contactNo": "0682951122",
+  "email": "stig@gmail.com",
+  "city": "Paris",
+  "state": "Ile de france",
+  "pincode": "123456",
+  "altContactNo": "",
+  "designationName": "DEV",
+  "address": "12 rue test",
+  "designationId": 1,
+  "designation": {
+    "designationId": 1,
+    "departmentId": 3,
+    "designationName": "DEV"
+  },
+  "createdDate": "2026-03-23T19:25:08.265Z",
+  "modifiedDate": "2026-03-23T19:25:08.265Z",
+  "role": "Developpeur"
+}
+
+//201 =>
+
+{
+  "employeeId": 1,
+  "name": "Stig Nilsson",
+  "contactNo": "0682951122",
+  "email": "stig@gmail.com",
+  "city": "Paris",
+  "state": "Ile de france",
+  "pincode": "123456",
+  "altContactNo": "",
+  "address": "12 rue test",
+  "designation": {
+    "designationId": 1,
+    "departmentId": 3,
+    "designationName": "DEV"
+  },
+  "createdDate": "2026-03-23T19:58:06.1527093Z",
+  "modifiedDate": "2026-03-23T19:58:06.152711Z",
+  "role": "Developpeur"
+}
