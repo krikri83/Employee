@@ -44,6 +44,6 @@ namespace Employee.Api.Model
 		[Required, EmailAddress]
 		public string? Email { get; set; }
 		[Required]
-		public string? ContactNo { get; set; }
+		public string? password { get; set; }
 	}
 }

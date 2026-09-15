@@ -248,13 +248,13 @@ namespace Employee.Api.Controllers
 		{
 			try
 			{
-				if (string.IsNullOrEmpty(request.Email) && string.IsNullOrEmpty(request.ContactNo))
+				if (string.IsNullOrEmpty(request.Email) && string.IsNullOrEmpty(request.password))
 				return BadRequest("Email or ContactNo is required.");
 
 				var employee = await _context.Employees
 					.FirstOrDefaultAsync(e =>
 						(request.Email != null && e.email == request.Email) ||
-						(request.ContactNo != null && e.contactNo == request.ContactNo));
+						(request.password != null && e.contactNo == request.password));
 
 				if (employee == null)
 					return Unauthorized("Invalid credentials.");
