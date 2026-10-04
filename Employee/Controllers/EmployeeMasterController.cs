@@ -267,7 +267,7 @@ namespace Employee.Api.Controllers
 				employeeDTO.email = employee.email;
 				employeeDTO.contactNo = employee.contactNo;
 				employeeDTO.Designation = new Designation();
-				employeeDTO.Designation.departmentId = employee.designationId;
+				employeeDTO.Designation.designationId = employee.designationId;
 				employeeDTO.Designation.designationName = employee.designationName;
 				employeeDTO.role = employee.role; 
 

@@ -20,6 +20,16 @@ namespace Employee.Api.Controllers
 			return Ok(deptList);
 		}
 
+		[HttpGet("GetDepartmentById/{id}")]
+		public IActionResult GetDepartmentById(int id)
+		{
+			var dept = _context.Departments.Find(id);
+			if (dept == null)
+				return NotFound("Department not found");
+
+			return Ok(dept);
+		}
+
 		[HttpPost("AddDepartment")]
 		public async Task<IActionResult> AddDepartmentAsync(Department department)
 		{
@@ -70,13 +80,18 @@ namespace Employee.Api.Controllers
 		{
 			var existingDept = _context.Departments.Find(id);
 			if (existingDept == null)
-			{
 				return NotFound("Department not found");
-			}
-			_context.Departments.Remove(existingDept);
-			_context.SaveChanges();
-			return Ok("Department Deleted Successfully");
 
+			try
+			{
+				_context.Departments.Remove(existingDept);
+				_context.SaveChanges();
+				return Ok("Department Deleted Successfully");
+			}
+			catch (DbUpdateException)
+			{
+				return Conflict("Impossible de supprimer : ce département a des désignations liées.");
+			}
 		}
 	}
 }
